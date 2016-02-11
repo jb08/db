@@ -1,5 +1,11 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+
+import simpledb.Aggregator.Op;
+
 /**
  * Knows how to compute some aggregate over a set of IntFields.
  */
@@ -8,9 +14,17 @@ public class IntegerAggregator implements Aggregator {
     private static final long serialVersionUID = 1L;
 
     int ia_gbfield;
-    Type ia_gbfieldtype;
-    int ia_afield;
-    Op ia_what;
+	Type ia_gbfieldtype;
+	int ia_afield;
+	Op ia_what;
+
+	boolean no_grouping;
+	int count_if_not_grouping;
+	int count;
+
+	TupleDesc tup_desc;
+
+	HashMap<Field,Integer> gbAgg;
     
     /**
      * Aggregate constructor
@@ -30,10 +44,18 @@ public class IntegerAggregator implements Aggregator {
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
     	
-    	ia_gbfield = gbfield;
-    	ia_gbfieldtype = gbfieldtype;
-    	ia_afield = afield;
-    	ia_what = what;
+		ia_gbfield = gbfield;
+		ia_gbfieldtype = gbfieldtype;
+		ia_afield = afield;
+		ia_what = what;
+
+		gbAgg = new HashMap<Field, Integer>();
+		no_grouping = (gbfieldtype == null || gbfield == NO_GROUPING);
+		count_if_not_grouping = 0;
+		count = 0;
+
+		tup_desc = null;
+
     }
 
     /**
@@ -45,7 +67,56 @@ public class IntegerAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+    	count++;
     	
+    	
+    	//save tupledescriptor for creating final table
+		if(tup_desc == null)
+		{
+			tup_desc = tup.getTupleDesc();
+		}
+
+		//not grouping - just increment count of rows
+		if(no_grouping)
+		{
+			//what to do with ops?
+		}
+
+		//grouping - add or increment Field in Hashmap
+		Field f = tup.getField(ia_gbfield);
+		
+		Field tf = tup.getField(ia_afield);
+		IntField itf = (IntField) tf;
+		int tupVal = itf.getValue();
+	
+		if(gbAgg.containsKey(f))
+		{
+			int val = gbAgg.get(f);
+	
+			if (ia_what==Op.MIN)
+        		val = Math.min(val, tupVal); 
+			else if (ia_what==Op.MAX)
+				val = Math.max(val, tupVal);
+			else if (ia_what==Op.SUM)
+			{
+				val += tupVal;
+			}
+			else if (ia_what==Op.AVG)
+			{
+				//faulty - count can't work for all groups
+				int current_sum = val*(count-1);
+				current_sum += tupVal;
+				val = current_sum / count;
+			}
+			/*else if (ia_what==Op.COUNT)
+				System.out.println("IntAgg Count");*/
+			
+			gbAgg.put(f, val);
+		}
+		else
+		{
+			gbAgg.put(f,tupVal);
+		}
     	
     	
     }
@@ -60,8 +131,42 @@ public class IntegerAggregator implements Aggregator {
      */
     public DbIterator iterator() {
         // some code goes here
-        throw new
-        UnsupportedOperationException("please implement me for lab2");
+        
+    	//Create TupleDesc for final table
+    	Type[] typeAr = new Type[2];
+    	typeAr[0] = ia_gbfieldtype;
+    	typeAr[1] = Type.INT_TYPE;
+
+    	String[] fieldAr = new String[2];
+    	fieldAr[0] = tup_desc.getFieldName(ia_gbfield);
+    	fieldAr[1] = tup_desc.getFieldName(ia_afield);
+
+    	TupleDesc table_td = new TupleDesc(typeAr, fieldAr);
+
+    	//Set up container that can be iterated
+    	ArrayList<Tuple> arr = new ArrayList<Tuple>();
+
+    	Set<Field> fields = gbAgg.keySet();
+
+    	for(Field field : fields)
+    	{
+    		int value = gbAgg.get(field);
+    		Tuple row = new Tuple(table_td);
+
+    		//first column: group by field
+    		row.setField(0, field);
+    		//second column: count
+    		row.setField(1, new IntField(value));
+
+    		arr.add(row);
+    	}
+
+    	//Other case: no_grouping
+    	//Not Implemented
+
+    	TupleIterator it = new TupleIterator(table_td, (Iterable<Tuple>) arr);
+
+    	return it;
     }
 
 }
