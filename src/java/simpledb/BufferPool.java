@@ -18,7 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BufferPool {
     /** Bytes per page, including header. */
     private static final int PAGE_SIZE = 4096;
-
+	//private static final int PAGE_SIZE = 4;
+	
     private static int pageSize = PAGE_SIZE;
     
     private ConcurrentHashMap<PageId, Page> pages;
@@ -74,6 +75,7 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
+    	//System.out.println("BufferPool getPage()");
     	
     	Page output;
     	//int key = pid.hashCode();

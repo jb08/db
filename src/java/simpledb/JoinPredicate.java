@@ -2,12 +2,18 @@ package simpledb;
 
 import java.io.Serializable;
 
+import simpledb.Predicate.Op;
+
 /**
  * JoinPredicate compares fields of two tuples using a predicate. JoinPredicate
  * is most likely used by the Join operator.
  */
 public class JoinPredicate implements Serializable {
 
+	int jp_field1;
+	int jp_field2;
+	Predicate.Op jp_op;
+	
     private static final long serialVersionUID = 1L;
 
     /**
@@ -26,6 +32,11 @@ public class JoinPredicate implements Serializable {
      */
     public JoinPredicate(int field1, Predicate.Op op, int field2) {
         // some code goes here
+    	
+    	jp_field1 = field1;
+    	jp_field2 = field2;
+    	jp_op = op;
+    	
     }
 
     /**
@@ -36,24 +47,30 @@ public class JoinPredicate implements Serializable {
      */
     public boolean filter(Tuple t1, Tuple t2) {
         // some code goes here
-        return false;
+    	
+    	Field f1 = t1.getField(jp_field1);
+    	Field f2 = t2.getField(jp_field2); 
+    	
+        boolean output = f1.compare(jp_op, f2);
+        
+        return output;
     }
     
     public int getField1()
     {
         // some code goes here
-        return -1;
+        return jp_field1;
     }
     
     public int getField2()
     {
         // some code goes here
-        return -1;
+        return jp_field2;
     }
     
     public Predicate.Op getOperator()
     {
         // some code goes here
-        return null;
+        return jp_op;
     }
 }

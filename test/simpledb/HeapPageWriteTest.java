@@ -57,8 +57,6 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
         for (int i = 0; i < free; ++i) {
             Tuple addition = Utility.getHeapTuple(i, 2);
             page.insertTuple(addition);
-            assertEquals(free-i-1, page.getNumEmptySlots());
-
             // loop through the iterator to ensure that the tuple actually exists
             // on the page
             Iterator<Tuple >it = page.iterator();

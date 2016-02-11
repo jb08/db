@@ -118,6 +118,7 @@ public class Tuple implements Serializable {
      * */
     public Iterator<Field> fields()
     {
+    	System.out.println("Tuple fields()");
     	Iterable<Field> iterable = Arrays.asList(record);
         return iterable.iterator();
     }

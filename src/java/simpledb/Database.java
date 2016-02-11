@@ -22,7 +22,8 @@ public class Database {
     private final LogFile _logfile;
 
     private Database() {
-        _catalog = new Catalog();
+        //System.out.println("Database()");
+    	_catalog = new Catalog();
         _bufferpool = new BufferPool(BufferPool.DEFAULT_PAGES);
         LogFile tmp = null;
         try {
@@ -47,7 +48,8 @@ public class Database {
 
     /** Return the catalog of the static Database instance */
     public static Catalog getCatalog() {
-        return _instance.get()._catalog;
+        //System.out.println("Database getCatalog()");
+    	return _instance.get()._catalog;
     }
 
     /**

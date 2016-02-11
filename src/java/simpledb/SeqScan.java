@@ -86,6 +86,7 @@ public class SeqScan implements DbIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
+    	//System.out.println("SeqScan open()");
         it.open();
     }
 
@@ -114,13 +115,15 @@ public class SeqScan implements DbIterator {
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return it.hasNext();
+    	//System.out.println("SeqScan hasNext()");
+    	return it.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        return it.next();
+    	//System.out.println("SeqScan next()");
+    	return it.next();
     }
 
     public void close() {

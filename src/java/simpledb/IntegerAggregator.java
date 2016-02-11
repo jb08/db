@@ -7,6 +7,11 @@ public class IntegerAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
 
+    int ia_gbfield;
+    Type ia_gbfieldtype;
+    int ia_afield;
+    Op ia_what;
+    
     /**
      * Aggregate constructor
      * 
@@ -24,6 +29,11 @@ public class IntegerAggregator implements Aggregator {
 
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
+    	
+    	ia_gbfield = gbfield;
+    	ia_gbfieldtype = gbfieldtype;
+    	ia_afield = afield;
+    	ia_what = what;
     }
 
     /**
@@ -35,6 +45,9 @@ public class IntegerAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+    	
+    	
+    	
     }
 
     /**

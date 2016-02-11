@@ -38,6 +38,8 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public boolean hasNext() throws DbException, TransactionAbortedException {
+			//System.out.println("HeapFileIterator hasNext()");
+			
 			// If not open
 			if (this.i == null) {
 				return false;
@@ -75,7 +77,7 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
-			//System.out.println("open-- start");
+			//System.out.println("HeapFileIterator open()");
 
 			PageId pid = new HeapPageId(this.fileID, 0);
 
@@ -104,6 +106,8 @@ public class HeapFile implements DbFile {
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException,
 		NoSuchElementException {
+			//System.out.println("HeapFileIterator next()");
+			
 			// If no call to open
 			if (this.i == null) {
 				//System.out.println("current internal iterator is null");
@@ -229,6 +233,10 @@ public class HeapFile implements DbFile {
 	 * Returns the number of pages in this HeapFile.
 	 */
 	public int numPages() {
+		//System.out.println("HeapFile numPages()");
+		//long file_length = this.file.length();
+		//System.out.println("  file_length = " + file_length);
+		//System.out.println("  bufferPool page size = " + BufferPool.getPageSize());
 		return (int) (this.file.length() / BufferPool.getPageSize());
 	}
 

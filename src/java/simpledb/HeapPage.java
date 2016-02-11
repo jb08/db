@@ -50,11 +50,33 @@ public class HeapPage implements Page {
 
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
+        
+        /*System.out.println("start ---");*/
         for (int i=0; i<header.length; i++)
-            header[i] = dis.readByte();
+        {
+        	
+        	header[i] = dis.readByte();
+        	
+        	//if(header[i] !=0)
+        		//System.out.print("i: " + i + "; header[i]: " + header[i] + "---");
+        	
+        }
+        
+        //System.out.println("header.length: " + header.length);
+        //System.out.println("getHeaderSize: " + this.getHeaderSize());
+        
+        /*for(int i=0; i< this.getHeaderSize(); i++)
+        {
+        	if(this.isSlotUsed(i))
+        	{
+        		System.out.println(i);
+        	}
+        }*/
+        //System.out.println("end ---");
         
         tuples = new Tuple[numSlots]; //good
-        //tuples = new Tuple[numSlots+1]; //error
+        //tuples = new Tuple[numSlots+1]; //error  
+         
         
         try{
             // allocate and read the actual records of this page
@@ -79,6 +101,7 @@ public class HeapPage implements Page {
     	double ans_unrounded = page_size_bits / (tuple_size_bytes * 8 + 1);
     			
     	double ans_rounded = Math.floor(ans_unrounded);
+    	//System.out.println("HeapPage getNumTuples(): "+ ans_rounded);
    
         return (int) ans_rounded;
     }
@@ -104,6 +127,8 @@ public class HeapPage implements Page {
         
     	int result = (int) Math.ceil((double)numSlots / 8); //good
     	//int result = (int) Math.ceil(numSlots / 8); //error
+    	
+    	//System.out.println("HeapPage getHeaderSize(): " + result);
         return result;
                  
     }
@@ -375,6 +400,7 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
+    	//System.out.println("HeapPage iterator()");
     	//System.out.println("HeapPage iterator: start");
     	
     	List<Tuple> arrAsList = Arrays.asList(tuples);

@@ -15,6 +15,8 @@ public abstract class Operator implements DbIterator {
         if (!this.open)
             throw new IllegalStateException("Operator not yet open");
         
+        //System.out.println("Operator hasNext()");
+        
         if (next == null)
             next = fetchNext();
         return next != null;

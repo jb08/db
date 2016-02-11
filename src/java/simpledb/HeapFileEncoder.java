@@ -90,11 +90,12 @@ public class HeapFileEncoder {
   public static void convert(File inFile, File outFile, int npagebytes,
                  int numFields, Type[] typeAr, char fieldSeparator)
       throws IOException {
-
+	  
       int nrecbytes = 0;
       for (int i = 0; i < numFields ; i++) {
           nrecbytes += typeAr[i].getLen();
       }
+      System.out.println();
       int nrecords = (npagebytes * 8) /  (nrecbytes * 8 + 1);  //floor comes for free
       
     //  per record, we need one bit; there are nrecords per page, so we need
@@ -109,6 +110,7 @@ public class HeapFileEncoder {
 
     // our numbers probably won't be much larger than 1024 digits
     char buf[] = new char[1024];
+    //char buf[] = new char[10];
 
     int curpos = 0;
     int recordcount = 0;
