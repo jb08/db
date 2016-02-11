@@ -138,7 +138,8 @@ public class IntegerAggregator implements Aggregator {
     	typeAr[1] = Type.INT_TYPE;
 
     	String[] fieldAr = new String[2];
-    	fieldAr[0] = tup_desc.getFieldName(ia_gbfield);
+    	String f_name = tup_desc.getFieldName(ia_gbfield);
+    	fieldAr[0] = f_name;
     	fieldAr[1] = tup_desc.getFieldName(ia_afield);
 
     	TupleDesc table_td = new TupleDesc(typeAr, fieldAr);
