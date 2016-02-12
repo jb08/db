@@ -21,6 +21,9 @@ public class HeapPage implements Page {
 
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
+    
+    boolean dirtyPage;
+    TransactionId dirty_causing_tid;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -77,6 +80,8 @@ public class HeapPage implements Page {
         tuples = new Tuple[numSlots]; //good
         //tuples = new Tuple[numSlots+1]; //error  
          
+       dirtyPage = false;
+       dirty_causing_tid = null;
         
         try{
             // allocate and read the actual records of this page
@@ -299,6 +304,29 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+    	
+    	boolean found_tuple = false;
+
+    	for(int i = 0; i< tuples.length; i++)
+    	{
+    		if (isSlotUsed(i))
+    		{
+    			Tuple j = tuples[i];
+    			
+    			RecordId j_rid = j.getRecordId();
+    			RecordId t_rid = t.getRecordId();
+    			
+    			//found tuple to delete
+    			if(j_rid.equals(t_rid))
+    			{
+    				markSlotUsed(i, false);
+    				found_tuple = true;
+    				break;
+    			}
+    		}
+    	}
+    	
+    	if(!found_tuple) throw new DbException("Unable to find tuple to delete");
     }
 
     /**
@@ -311,6 +339,33 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+    	
+    	int num_empty = getNumEmptySlots();
+    	//System.out.println("HeapPage insertTuple() num_empty:" + num_empty);
+    	
+    	if(num_empty==0)
+    	{
+    		throw new DbException("No empty slots on HeapPage");
+    	}
+    	
+    	boolean found_slot = false;
+
+    	for(int i = 0; i< tuples.length; i++)
+    	{
+    		if (!isSlotUsed(i))
+    		{
+    			int tup_no_on_page = t.getRecordId().tupleno();
+    			RecordId new_rid = new RecordId(pid,tup_no_on_page);
+    			t.setRecordId(new_rid);
+    			tuples[i] = t;
+    			markSlotUsed(i,true);
+    			//num_empty = getNumEmptySlots();
+    			found_slot = true;
+    			break;	
+    		}
+    	}
+    	
+    	if(!found_slot) throw new DbException("Unable to find empty slot"); 
     }
 
     /**
@@ -320,6 +375,10 @@ public class HeapPage implements Page {
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
 	// not necessary for lab1
+    	
+    	dirtyPage = dirty;
+        dirty_causing_tid = tid;
+    	
     }
 
     /**
@@ -328,7 +387,14 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        if(dirtyPage)
+        {
+        	return dirty_causing_tid;
+        }
+        else
+        {
+        	return null;
+        }
     }
 
     /**
@@ -392,6 +458,24 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+		
+		int which_byte = i/8;
+    	int position = i%8;
+    	
+    	Byte get_byte = (Byte) header[which_byte];
+    	
+    	if(value)
+    	{
+    		//mark bit 1
+    		get_byte =  (byte) (get_byte |  ( (byte) 1 << position));
+    	}
+    	else
+    	{
+    		//mark bit 0
+    		get_byte =  (byte) (get_byte &  ~( (byte) 1 << position));
+    	}
+    	
+    	header[which_byte] = get_byte;
     }
 
     /**

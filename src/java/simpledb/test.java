@@ -1,13 +1,41 @@
 package simpledb;
 import java.io.*;
+import java.util.BitSet;
 
 public class test {
 
 	public static void main(String[] argv) {
 		//test_1();
-		grpAgg_test();
+		//grpAgg_test();
+		//byte_stuff();
 
 
+	}
+	
+	public static void byte_stuff()
+	{
+		byte[] bytes = new byte[1];
+		Byte value = Byte.parseByte("00000010",2);
+		bytes[0] = value;
+		System.out.println(value.toString());
+		
+		int i = 0;
+		
+		int which_byte = i/8;
+    	int position = i%8;
+    	
+    	byte get_byte = bytes[which_byte];
+    	int get_bit = (get_byte >> position) & 1;
+    	//System.out.println(get_bit);
+    	
+    	//get_byte = get_byte & ~((byte) 0 << position);
+    	//bytes[which_byte] = (byte) (bytes[which_byte] &  ~( (byte) 1 << position));
+    	bytes[which_byte] = (byte) (bytes[which_byte] |  ( (byte) 1 << position));
+    	
+    	Byte b = (Byte) bytes[which_byte];
+    	
+    	System.out.println(b.toString());
+		
 	}
 
 	public static void grpAgg_test()
