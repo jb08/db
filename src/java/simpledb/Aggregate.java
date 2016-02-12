@@ -19,6 +19,7 @@ public class Aggregate extends Operator {
 
 	Aggregator agg;
 	DbIterator aggIter;
+	boolean grouping;
 	
 	TupleDesc td;
 
@@ -53,9 +54,15 @@ public class Aggregate extends Operator {
 		child_td = child.getTupleDesc();
 
 		Type aggFieldType = child_td.getFieldType(afield);
-		Type gbFieldType = child_td.getFieldType(gfield);
+		
+		grouping = (gfield>Aggregator.NO_GROUPING);
+		
+		Type gbFieldType = null;
+		
+		if(grouping)
+			gbFieldType = child_td.getFieldType(gfield);
 
-		if(aggFieldType == Type.INT_TYPE)
+			if(aggFieldType == Type.INT_TYPE)
 		{
 			agg = new IntegerAggregator(gfield, gbFieldType, afield, aop);
 		}
@@ -69,15 +76,31 @@ public class Aggregate extends Operator {
 		}
 		
 		//set up new TupleDesc
+		if(grouping)
+		{
+			Type aggType = child_td.getFieldType(afield);
+			String aggName = aop.toString()+child_td.getFieldName(afield);
+			
+			
+			Type[] typeAr = {gbFieldType, aggType};
+			String[] fieldAr = {child_td.getFieldName(gfield),aggName};
+			
+			td = new TupleDesc(typeAr, fieldAr);
+		}
+		else //not grouping
+		{
+			Type aggType = child_td.getFieldType(afield);
+			String aggName = aop.toString()+child_td.getFieldName(afield);
+			
+			
+			Type[] typeAr = {aggType};
+			String[] fieldAr = {aggName};
+			
+			td = new TupleDesc(typeAr, fieldAr);
+			//System.out.println("no_grouping");
+		}
 		
-		Type aggType = child_td.getFieldType(afield);
-		String aggName = aop.toString()+child_td.getFieldName(afield);
 		
-		
-		Type[] typeAr = {gbFieldType, aggType};
-		String[] fieldAr = {child_td.getFieldName(gfield),aggName};
-		
-		td = new TupleDesc(typeAr, fieldAr);
 	}
 
 	/**
@@ -87,8 +110,11 @@ public class Aggregate extends Operator {
 	 * */
 	public int groupField() {
 		// some code goes here
-
-		return gfield;
+		
+		if(grouping)
+			return gfield;
+		else
+			return Aggregator.NO_GROUPING;
 	}
 
 	/**
@@ -100,8 +126,10 @@ public class Aggregate extends Operator {
 		// some code goes here
 		
 		//implement getting group field name in OUTPUT
-		
-		return td.getFieldName(gfield);
+		if(grouping)
+			return td.getFieldName(gfield);
+		else
+			return null;
 	}
 
 	/**

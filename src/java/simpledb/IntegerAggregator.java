@@ -20,12 +20,12 @@ public class IntegerAggregator implements Aggregator {
 
 	boolean no_grouping;
 	int count_if_not_grouping;
-	int count;
 
 	TupleDesc tup_desc;
 
 	HashMap<Field,Integer> gbAgg;
 	HashMap<Field,Integer> numElements;
+	HashMap<Field,Integer> sum;
 
 	/**
 	 * Aggregate constructor
@@ -52,9 +52,9 @@ public class IntegerAggregator implements Aggregator {
 
 		gbAgg = new HashMap<Field, Integer>();
 		numElements = new HashMap<Field, Integer>();
+		sum = new HashMap<Field, Integer>();
 		no_grouping = (gbfieldtype == null || gbfield == NO_GROUPING);
 		count_if_not_grouping = 0;
-		count = 0;
 
 		tup_desc = null;
 
@@ -77,18 +77,26 @@ public class IntegerAggregator implements Aggregator {
 		}
 
 		//not grouping - just increment count of rows
+		Field f;
+
 		if(no_grouping)
 		{
-			//what to do with ops?
+			f = new IntField(Aggregator.NO_GROUPING);
+		}
+		else
+		{
+			f = tup.getField(ia_gbfield);
 		}
 
 		//grouping - add or increment Field in Hashmap
-		Field f = tup.getField(ia_gbfield);
+
 
 		Field tf = tup.getField(ia_afield);
 		IntField itf = (IntField) tf;
 		int tupVal = itf.getValue();
 		int val = 0;
+		int count = 0;
+		int total = 0;
 		boolean first_key = true; 
 
 		if(gbAgg.containsKey(f))
@@ -116,16 +124,13 @@ public class IntegerAggregator implements Aggregator {
 			if(numElements.containsKey(f))
 			{
 				count = numElements.get(f);
+				total = sum.get(f);
 			}
-			else
-			{
-				count = 0;
-			}
-			
-			int current_sum = val*count;
-			current_sum += tupVal;
-			val = current_sum / (count+1);
+
+			total += tupVal;
+			val = total / (count+1);
 			numElements.put(f,(count+1));
+			sum.put(f, total);
 
 		}
 		else if (ia_what==Op.COUNT)
@@ -133,7 +138,7 @@ public class IntegerAggregator implements Aggregator {
 			val+=1;
 		}
 
-		gbAgg.put(f, val);
+		gbAgg.put(f,val);
 	}
 
 	/**
@@ -147,17 +152,34 @@ public class IntegerAggregator implements Aggregator {
 	public DbIterator iterator() {
 		// some code goes here
 
+		TupleDesc table_td;
+
 		//Create TupleDesc for final table
-		Type[] typeAr = new Type[2];
-		typeAr[0] = ia_gbfieldtype;
-		typeAr[1] = Type.INT_TYPE;
+		if(ia_gbfield>Aggregator.NO_GROUPING)
+		{
+			Type[] typeAr = new Type[2];
+			typeAr[0] = ia_gbfieldtype;
+			typeAr[1] = Type.INT_TYPE;
 
-		String[] fieldAr = new String[2];
-		String f_name = tup_desc.getFieldName(ia_gbfield);
-		fieldAr[0] = f_name;
-		fieldAr[1] = tup_desc.getFieldName(ia_afield);
+			String[] fieldAr = new String[2];
+			String f_name = tup_desc.getFieldName(ia_gbfield);
+			fieldAr[0] = f_name;
+			fieldAr[1] = tup_desc.getFieldName(ia_afield);
 
-		TupleDesc table_td = new TupleDesc(typeAr, fieldAr);
+			table_td = new TupleDesc(typeAr, fieldAr);
+		}
+		else
+		{
+			Type[] typeAr = new Type[1];
+			typeAr[0] = Type.INT_TYPE;
+
+			String[] fieldAr = new String[1];
+			fieldAr[0] = tup_desc.getFieldName(ia_afield);
+
+			table_td = new TupleDesc(typeAr, fieldAr);
+		}
+
+
 
 		//Set up container that can be iterated
 		ArrayList<Tuple> arr = new ArrayList<Tuple>();
@@ -169,11 +191,19 @@ public class IntegerAggregator implements Aggregator {
 			int value = gbAgg.get(field);
 			Tuple row = new Tuple(table_td);
 
-			//first column: group by field
-			row.setField(0, field);
-			//second column: count
-			row.setField(1, new IntField(value));
-
+			if(ia_gbfield>Aggregator.NO_GROUPING)
+			{
+				//first column: group by field
+				row.setField(0, field);
+				//second column: count
+				row.setField(1, new IntField(value));
+			}
+			else
+			{
+				row.setField(0, new IntField(value));
+			}
+			
+			
 			arr.add(row);
 		}
 
