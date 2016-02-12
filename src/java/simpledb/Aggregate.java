@@ -67,6 +67,17 @@ public class Aggregate extends Operator {
 		{
 			System.out.println("Aggregate::Agregate() failed");
 		}
+		
+		//set up new TupleDesc
+		
+		Type aggType = child_td.getFieldType(afield);
+		String aggName = aop.toString()+child_td.getFieldName(afield);
+		
+		
+		Type[] typeAr = {gbFieldType, aggType};
+		String[] fieldAr = {child_td.getFieldName(gfield),aggName};
+		
+		td = new TupleDesc(typeAr, fieldAr);
 	}
 
 	/**
@@ -138,6 +149,7 @@ public class Aggregate extends Operator {
 		}
 		super.open();
 		aggIter = agg.iterator();
+		aggIter.open();
 	}
 
 	/**
@@ -180,17 +192,16 @@ public class Aggregate extends Operator {
 	 */
 	public TupleDesc getTupleDesc() {
 		// some code goes here
-
-		TupleDesc td = aggIter.getTupleDesc();
 		return td;
 	}
 
 	public void close() {
 		// some code goes here
-
+		
+		super.close();
 		child.close();
 		aggIter.close();
-		super.close();
+		
 	}
 
 	@Override

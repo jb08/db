@@ -11,9 +11,9 @@ import simpledb.Aggregator.Op;
  */
 public class IntegerAggregator implements Aggregator {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    int ia_gbfield;
+	int ia_gbfield;
 	Type ia_gbfieldtype;
 	int ia_afield;
 	Op ia_what;
@@ -25,52 +25,52 @@ public class IntegerAggregator implements Aggregator {
 	TupleDesc tup_desc;
 
 	HashMap<Field,Integer> gbAgg;
-    
-    /**
-     * Aggregate constructor
-     * 
-     * @param gbfield
-     *            the 0-based index of the group-by field in the tuple, or
-     *            NO_GROUPING if there is no grouping
-     * @param gbfieldtype
-     *            the type of the group by field (e.g., Type.INT_TYPE), or null
-     *            if there is no grouping
-     * @param afield
-     *            the 0-based index of the aggregate field in the tuple
-     * @param what
-     *            the aggregation operator
-     */
+	HashMap<Field,Integer> numElements;
 
-    public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
-    	
+	/**
+	 * Aggregate constructor
+	 * 
+	 * @param gbfield
+	 *            the 0-based index of the group-by field in the tuple, or
+	 *            NO_GROUPING if there is no grouping
+	 * @param gbfieldtype
+	 *            the type of the group by field (e.g., Type.INT_TYPE), or null
+	 *            if there is no grouping
+	 * @param afield
+	 *            the 0-based index of the aggregate field in the tuple
+	 * @param what
+	 *            the aggregation operator
+	 */
+
+	public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
+		// some code goes here
+
 		ia_gbfield = gbfield;
 		ia_gbfieldtype = gbfieldtype;
 		ia_afield = afield;
 		ia_what = what;
 
 		gbAgg = new HashMap<Field, Integer>();
+		numElements = new HashMap<Field, Integer>();
 		no_grouping = (gbfieldtype == null || gbfield == NO_GROUPING);
 		count_if_not_grouping = 0;
 		count = 0;
 
 		tup_desc = null;
 
-    }
+	}
 
-    /**
-     * Merge a new tuple into the aggregate, grouping as indicated in the
-     * constructor
-     * 
-     * @param tup
-     *            the Tuple containing an aggregate field and a group-by field
-     */
-    public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
-    	count++;
-    	
-    	
-    	//save tupledescriptor for creating final table
+	/**
+	 * Merge a new tuple into the aggregate, grouping as indicated in the
+	 * constructor
+	 * 
+	 * @param tup
+	 *            the Tuple containing an aggregate field and a group-by field
+	 */
+	public void mergeTupleIntoGroup(Tuple tup) {
+		// some code goes here
+
+		//save tupledescriptor for creating final table
 		if(tup_desc == null)
 		{
 			tup_desc = tup.getTupleDesc();
@@ -84,90 +84,105 @@ public class IntegerAggregator implements Aggregator {
 
 		//grouping - add or increment Field in Hashmap
 		Field f = tup.getField(ia_gbfield);
-		
+
 		Field tf = tup.getField(ia_afield);
 		IntField itf = (IntField) tf;
 		int tupVal = itf.getValue();
-	
+		int val = 0;
+		boolean first_key = true; 
+
 		if(gbAgg.containsKey(f))
 		{
-			int val = gbAgg.get(f);
-	
-			if (ia_what==Op.MIN)
-        		val = Math.min(val, tupVal); 
-			else if (ia_what==Op.MAX)
-				val = Math.max(val, tupVal);
-			else if (ia_what==Op.SUM)
-			{
-				val += tupVal;
-			}
-			else if (ia_what==Op.AVG)
-			{
-				//faulty - count can't work for all groups
-				int current_sum = val*(count-1);
-				current_sum += tupVal;
-				val = current_sum / count;
-			}
-			/*else if (ia_what==Op.COUNT)
-				System.out.println("IntAgg Count");*/
-			
-			gbAgg.put(f, val);
-		}
-		else
+			val = gbAgg.get(f);
+			first_key = false;
+		}	
+
+		if (ia_what==Op.MIN)
 		{
-			gbAgg.put(f,tupVal);
+			if(first_key) val = Integer.MAX_VALUE;
+			val = Math.min(val, tupVal);
 		}
-    	
-    	
-    }
+		else if (ia_what==Op.MAX)
+		{
+			if(first_key) val = Integer.MIN_VALUE;
+			val = Math.max(val, tupVal);
+		}
+		else if (ia_what==Op.SUM)
+		{
+			val += tupVal;
+		}
+		else if (ia_what==Op.AVG)
+		{
+			if(numElements.containsKey(f))
+			{
+				count = numElements.get(f);
+			}
+			else
+			{
+				count = 0;
+			}
+			
+			int current_sum = val*count;
+			current_sum += tupVal;
+			val = current_sum / (count+1);
+			numElements.put(f,(count+1));
 
-    /**
-     * Create a DbIterator over group aggregate results.
-     * 
-     * @return a DbIterator whose tuples are the pair (groupVal, aggregateVal)
-     *         if using group, or a single (aggregateVal) if no grouping. The
-     *         aggregateVal is determined by the type of aggregate specified in
-     *         the constructor.
-     */
-    public DbIterator iterator() {
-        // some code goes here
-        
-    	//Create TupleDesc for final table
-    	Type[] typeAr = new Type[2];
-    	typeAr[0] = ia_gbfieldtype;
-    	typeAr[1] = Type.INT_TYPE;
+		}
+		else if (ia_what==Op.COUNT)
+		{
+			val+=1;
+		}
 
-    	String[] fieldAr = new String[2];
-    	String f_name = tup_desc.getFieldName(ia_gbfield);
-    	fieldAr[0] = f_name;
-    	fieldAr[1] = tup_desc.getFieldName(ia_afield);
+		gbAgg.put(f, val);
+	}
 
-    	TupleDesc table_td = new TupleDesc(typeAr, fieldAr);
+	/**
+	 * Create a DbIterator over group aggregate results.
+	 * 
+	 * @return a DbIterator whose tuples are the pair (groupVal, aggregateVal)
+	 *         if using group, or a single (aggregateVal) if no grouping. The
+	 *         aggregateVal is determined by the type of aggregate specified in
+	 *         the constructor.
+	 */
+	public DbIterator iterator() {
+		// some code goes here
 
-    	//Set up container that can be iterated
-    	ArrayList<Tuple> arr = new ArrayList<Tuple>();
+		//Create TupleDesc for final table
+		Type[] typeAr = new Type[2];
+		typeAr[0] = ia_gbfieldtype;
+		typeAr[1] = Type.INT_TYPE;
 
-    	Set<Field> fields = gbAgg.keySet();
+		String[] fieldAr = new String[2];
+		String f_name = tup_desc.getFieldName(ia_gbfield);
+		fieldAr[0] = f_name;
+		fieldAr[1] = tup_desc.getFieldName(ia_afield);
 
-    	for(Field field : fields)
-    	{
-    		int value = gbAgg.get(field);
-    		Tuple row = new Tuple(table_td);
+		TupleDesc table_td = new TupleDesc(typeAr, fieldAr);
 
-    		//first column: group by field
-    		row.setField(0, field);
-    		//second column: count
-    		row.setField(1, new IntField(value));
+		//Set up container that can be iterated
+		ArrayList<Tuple> arr = new ArrayList<Tuple>();
 
-    		arr.add(row);
-    	}
+		Set<Field> fields = gbAgg.keySet();
 
-    	//Other case: no_grouping
-    	//Not Implemented
+		for(Field field : fields)
+		{
+			int value = gbAgg.get(field);
+			Tuple row = new Tuple(table_td);
 
-    	TupleIterator it = new TupleIterator(table_td, (Iterable<Tuple>) arr);
+			//first column: group by field
+			row.setField(0, field);
+			//second column: count
+			row.setField(1, new IntField(value));
 
-    	return it;
-    }
+			arr.add(row);
+		}
+
+		//Other case: no_grouping
+		//Not Implemented
+
+		TupleIterator it = new TupleIterator(table_td, (Iterable<Tuple>) arr);
+
+		return it;
+	}
 
 }
