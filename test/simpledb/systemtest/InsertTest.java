@@ -8,7 +8,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class InsertTest extends SimpleDbTestBase {
-    private void validateInsert(int columns, int sourceRows, int destinationRows)
+    
+	private void validateInsert(int columns, int sourceRows, int destinationRows)
                 throws DbException, IOException, TransactionAbortedException {
         // Create the two tables
         ArrayList<ArrayList<Integer>> sourceTuples = new ArrayList<ArrayList<Integer>>();

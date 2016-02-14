@@ -10,6 +10,7 @@ public class Insert extends Operator {
 	DbIterator child;
 	int tableid;
 	TupleDesc FNresult;
+	boolean hasNotBeenUsed;
 	
 	
 	
@@ -35,6 +36,8 @@ public class Insert extends Operator {
 		this.tid = t;
 		this.child = child;
 		this.tableid = tableid;
+		
+		this.hasNotBeenUsed = true;
 		
 		Type[] typeAr = new Type[]{Type.INT_TYPE};
 		String[] fieldAr = new String[]{"Num_inserted_tuples"};
@@ -88,13 +91,14 @@ public class Insert extends Operator {
 		// some code goes here
 		
 		int count = 0; 
-		int abc = 0;
+		
+		if(!this.hasNotBeenUsed)
+		{
+			return null;
+		}
 		
 		try
 		{
-			
-			abc +=1;
-			
 			while(child.hasNext())
 			{
 				Database.getBufferPool().insertTuple(tid, tableid, child.next());
@@ -109,6 +113,7 @@ public class Insert extends Operator {
 		//reporting purposes
 		Tuple t = new Tuple(FNresult);
 		t.setField(0, new IntField(count));
+		this.hasNotBeenUsed = false;
 		
 		return t;
 	}
