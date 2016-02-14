@@ -181,6 +181,7 @@ public class BufferPool {
     	for(Page p : updated)
     	{
     		p.markDirty(true, tid);
+    		pages.put(p.getId(), p);
     	}
     }
 
@@ -206,8 +207,9 @@ public class BufferPool {
     	hp.deleteTuple(t);
     	
     	hp.markDirty(true, tid);
+    	pages.put(hp.getId(), hp);
     }
-
+    
     /**
      * Flush all dirty pages to disk.
      * NB: Be careful using this routine -- it writes dirty data to disk so will

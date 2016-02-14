@@ -351,7 +351,7 @@ public class HeapPage implements Page {
     	{
     		if (!isSlotUsed(i))
     		{
-    			int tup_no_on_page = t.getRecordId().tupleno();
+    			int tup_no_on_page = i;
     			RecordId new_rid = new RecordId(pid,tup_no_on_page);
     			t.setRecordId(new_rid);
     			tuples[i] = t;
