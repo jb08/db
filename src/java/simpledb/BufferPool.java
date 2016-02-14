@@ -202,7 +202,7 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
     	
-    	HeapPage hp = ((HeapPage) getPage(tid, t.getRecordId().getPageId(), null));
+    	HeapPage hp = ((HeapPage) getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE));
     	hp.deleteTuple(t);
     	
     	hp.markDirty(true, tid);
