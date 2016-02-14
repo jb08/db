@@ -302,26 +302,33 @@ public class HeapPage implements Page {
         // not necessary for lab1
     	
     	boolean found_tuple = false;
-
-    	for(int i = 0; i< tuples.length; i++)
-    	{
-    		if (isSlotUsed(i))
-    		{
-    			Tuple j = tuples[i];
-    			
-    			RecordId j_rid = j.getRecordId();
-    			RecordId t_rid = t.getRecordId();
-    			
-    			//found tuple to delete
-    			if(j_rid.equals(t_rid))
-    			{
-    				markSlotUsed(i, false);
-    				found_tuple = true;
-    				//markDirty(true,null);
-    				break;
-    			}
-    		}
+    	int i = t.getRecordId().tupleno();
+    	
+    	if (this.isSlotUsed(i) == true) {
+    		this.tuples[i] = null;
+    		this.markSlotUsed(i, false);
+    		found_tuple = true;
     	}
+
+//    	for(int i = 0; i< tuples.length; i++)
+//    	{
+//    		if (isSlotUsed(i))
+//    		{
+//    			Tuple j = tuples[i];
+//    			
+//    			//RecordId j_rid = j.getRecordId();
+//    			//RecordId t_rid = t.getRecordId();
+//    			
+//    			//found tuple to delete
+//    			if(j.equals(t))
+//    			{
+//    				markSlotUsed(i, false);
+//    				found_tuple = true;
+//    				markDirty(true,null);
+//    				break;
+//    			}
+//    		}
+//    	}
     	
     	if(!found_tuple) throw new DbException("Unable to find tuple to delete");
     }
