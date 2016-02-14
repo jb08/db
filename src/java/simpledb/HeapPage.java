@@ -45,11 +45,11 @@ public class HeapPage implements Page {
         //System.out.println("HeapPage() -- open");
     	this.pid = id;
     	//System.out.println("..step1");
+    	//System.out.println("HeapPage::HeapPage() - tableID: "+id.getTableId());
     	this.td = Database.getCatalog().getTupleDesc(id.getTableId());
     	//System.out.println("..step2");
         this.numSlots = getNumTuples();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-        
 
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
@@ -59,10 +59,6 @@ public class HeapPage implements Page {
         {
         	
         	header[i] = dis.readByte();
-        	
-        	//if(header[i] !=0)
-        		//System.out.print("i: " + i + "; header[i]: " + header[i] + "---");
-        	
         }
         
         //System.out.println("header.length: " + header.length);
@@ -321,6 +317,7 @@ public class HeapPage implements Page {
     			{
     				markSlotUsed(i, false);
     				found_tuple = true;
+    				//markDirty(true,null);
     				break;
     			}
     		}
@@ -359,6 +356,7 @@ public class HeapPage implements Page {
     			t.setRecordId(new_rid);
     			tuples[i] = t;
     			markSlotUsed(i,true);
+    			//markDirty(true,null);
     			//num_empty = getNumEmptySlots();
     			found_slot = true;
     			break;	

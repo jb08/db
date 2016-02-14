@@ -2,6 +2,9 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+
+import com.sun.jndi.url.iiopname.iiopnameURLContextFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,7 +42,7 @@ public class HeapFile implements DbFile {
 		@Override
 		public boolean hasNext() throws DbException, TransactionAbortedException {
 			//System.out.println("HeapFileIterator hasNext()");
-			
+
 			// If not open
 			if (this.i == null) {
 				return false;
@@ -85,9 +88,9 @@ public class HeapFile implements DbFile {
 
 			Page my_page = bf.getPage(this.tid, pid, Permissions.READ_WRITE);
 			//System.out.println("Page: " + my_page);
-			
+
 			HeapPage heapPage = (HeapPage) my_page;
-			
+
 			//System.out.println("open3");
 			//System.out.println("HeapPage: " + heapPage);
 
@@ -107,7 +110,7 @@ public class HeapFile implements DbFile {
 		public Tuple next() throws DbException, TransactionAbortedException,
 		NoSuchElementException {
 			//System.out.println("HeapFileIterator next()");
-			
+
 			// If no call to open
 			if (this.i == null) {
 				//System.out.println("current internal iterator is null");
@@ -226,7 +229,15 @@ public class HeapFile implements DbFile {
 	// see DbFile.java for javadocs
 	public void writePage(Page page) throws IOException {
 		// some code goes here
-		// not necessary for lab1
+		// not necessary for lab 1
+
+		byte[] buffer = page.getPageData();
+		int off = page.getId().pageNumber()*BufferPool.getPageSize();
+		RandomAccessFile file_random = new RandomAccessFile(file, "rw");
+		
+		file_random.seek(off);
+		file_random.write(buffer, 0, BufferPool.getPageSize());
+		file_random.close();
 	}
 
 	/**
@@ -244,8 +255,56 @@ public class HeapFile implements DbFile {
 	public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
-		return null;
 		// not necessary for lab1
+
+		ArrayList<Page> output = new ArrayList<Page>();
+		boolean found_space = false;
+
+		for(int i = 0; i< numPages() ;i++)
+		{
+			//HeapPageId hpid = new HeapPageId(t.getRecordId().getPageId().getTableId(), i);
+			HeapPageId hpid = new HeapPageId(getId(), i);
+			Page right_page = Database.getBufferPool().getPage(tid, hpid,Permissions.READ_WRITE);
+			HeapPage right_hpage = (HeapPage) right_page;
+
+			if(right_hpage.getNumEmptySlots()>0)
+			{
+				//RecordId t_rid = new RecordId(hpid, t.getRecordId().tupleno());
+				//t.setRecordId(t_rid);
+				right_hpage.insertTuple(t);
+				//right_hpage.markDirty(true, tid);
+				output.add(right_hpage);
+
+				found_space = true;
+				break;
+			}
+
+		}
+
+		if(!found_space)
+		{
+			byte[] empty = HeapPage.createEmptyPageData();
+
+			//int tableid = t.getRecordId().getPageId().getTableId();
+			int tableid = getId();
+
+			//System.out.println("HeapFile::HeapFile() - tableID: "+tableid);
+			HeapPageId hid = new HeapPageId(tableid,numPages());
+			HeapPage empty_hpage = new HeapPage(hid, empty);
+			empty_hpage.insertTuple(t);
+
+			writePage(empty_hpage);
+
+			//RecordId t_rid = new RecordId(hid, t.getRecordId().tupleno());
+			//t.setRecordId(t_rid);
+
+			
+			//empty_hpage.markDirty(true, tid);
+			output.add(empty_hpage);
+		}
+
+		return output;
+
 	}
 
 	// see DbFile.java for javadocs
@@ -253,18 +312,20 @@ public class HeapFile implements DbFile {
 	TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
-		
+
 		ArrayList<Page> output = new ArrayList<Page>();
-		
+
 		RecordId t_rid = t.getRecordId();
 		PageId pid = t_rid.getPageId();
-		
+
 		Page right_page = Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
-		//right_page
-		
-		
-		
-		
+		HeapPage right_hpage = (HeapPage) right_page;
+
+		right_hpage.deleteTuple(t);
+		right_hpage.markDirty(true, tid);
+
+		output.add(right_page);
+
 		return output;
 	}
 

@@ -65,7 +65,8 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
      */
     @Test public void insertTuple() throws Exception {
         // we should be able to add 504 tuples on an empty page.
-        for (int i = 0; i < 504; ++i) {
+        for (int i = 0; i < 504; ++i) 
+        {
         	Tuple t = Utility.getHeapTuple(i, 2);
         	Database.getBufferPool().insertTuple(tid, empty.getId(), t);
         	HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_ONLY);
@@ -73,7 +74,8 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
         }
 
         // the next 504 additions should live on a new page
-        for (int i = 0; i < 504; ++i) {
+        for (int i = 0; i < 504; ++i) 
+        {
         	Tuple t = Utility.getHeapTuple(i, 2);
         	Database.getBufferPool().insertTuple(tid, empty.getId(), t);
         	HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_ONLY);
